@@ -18,51 +18,72 @@ import (
 
 var (
 	reader    *bufio.Reader
-	powerDraw = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "power_draw_watts",
-		Help: "Current power draw in Watts",
+	powerDraw_del = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "power_draw_watts_del",
+		Help: "Current delivered power draw in Watts",
 	})
 
-	powerTariff1 = prometheus.NewCounterFunc(
+	powerDraw_res = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "power_draw_watts_res",
+		Help: "Current received power draw in Watts",
+	})
+
+	powerTariff1_in = prometheus.NewCounterFunc(
 		prometheus.CounterOpts{
-			Name: "power_meter_tariff1_watthours",
-			Help: "power meter tariff1 reading in Watthours",
+			Name: "power_meter_tariff1_watthours_in",
+			Help: "power meter tariff1 to client reading in Watthours",
 		},
 		func() float64 {
-			fmt.Println("reading powerTariff1Meter")
-			return powerTariff1Meter
-		},
-	)
-	powerTariff2 = prometheus.NewCounterFunc(
-		prometheus.CounterOpts{
-			Name: "power_meter_tariff2_watthours",
-			Help: "power meter tariff2 reading in Watthours",
-		},
-		func() float64 {
-			return powerTariff2Meter
-		},
-	)
-	gasMeter = prometheus.NewCounterFunc(
-		prometheus.CounterOpts{
-			Name: "gas_meter_cm2",
-			Help: "Gas meter reading in cm2",
-		},
-		func() float64 {
-			return gasTotalMeter
+			fmt.Println("reading powerTariff1Meter_in")
+			return powerTariff1Meter_in
 		},
 	)
 
-	powerTariff1Meter float64
-	powerTariff2Meter float64
-	gasTotalMeter     float64
+	powerTariff1_out = prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
+			Name: "power_meter_tariff1_watthours_out",
+			Help: "power meter tariff1 by client reading in Watthours",
+		},
+		func() float64 {
+			fmt.Println("reading powerTariff1Meter_out")
+			return powerTariff1Meter_out
+		},
+	)
+
+	powerTariff2_in = prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
+			Name: "power_meter_tariff2_watthours_in",
+			Help: "power meter tariff2 to client reading in Watthours",
+		},
+		func() float64 {
+			return powerTariff2Meter_in
+		},
+	)
+
+	powerTariff2_out = prometheus.NewCounterFunc(
+		prometheus.CounterOpts{
+			Name: "power_meter_tariff2_watthours_out",
+			Help: "power meter tariff2 by client reading in Watthours",
+		},
+		func() float64 {
+			return powerTariff2Meter_out
+		},
+	)
+
+	powerTariff1Meter_in float64
+	powerTariff2Meter_in float64
+	powerTariff1Meter_out float64
+	powerTariff2Meter_out float64
 )
 
 func init() {
 	// Metrics have to be registered to be exposed:
-	prometheus.MustRegister(powerDraw)
-	prometheus.MustRegister(powerTariff1)
-	prometheus.MustRegister(powerTariff2)
-	prometheus.MustRegister(gasMeter)
+	prometheus.MustRegister(powerDraw_del)
+	prometheus.MustRegister(powerTariff1_in)
+	prometheus.MustRegister(powerTariff2_in)
+	prometheus.MustRegister(powerDraw_res)
+	prometheus.MustRegister(powerTariff1_out)
+	prometheus.MustRegister(powerTariff2_out)
 }
 
 func main() {
@@ -114,28 +135,48 @@ func listener(source io.Reader) {
 				fmt.Println(err)
 				continue
 			}
-			powerTariff1Meter = tmpVal * 1000
+			powerTariff1Meter_in = tmpVal * 1000
+
+		} else if strings.HasPrefix(line, "1-0:2.8.1") {
+			tmpVal, err := strconv.ParseFloat(line[10:20], 64)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			powerTariff1Meter_out = tmpVal * 1000
+
 		} else if strings.HasPrefix(line, "1-0:1.8.2") {
 			tmpVal, err := strconv.ParseFloat(line[10:20], 64)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-			powerTariff2Meter = tmpVal * 1000
-		} else if strings.HasPrefix(line, "0-1:24.2.1") {
-			tmpVal, err := strconv.ParseFloat(line[26:35], 64)
+			powerTariff2Meter_in = tmpVal * 1000
+
+		} else if strings.HasPrefix(line, "1-0:2.8.2") {
+			tmpVal, err := strconv.ParseFloat(line[10:20], 64)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-			gasTotalMeter = tmpVal * 100 * 100 * 100 // m3 to cm3
+			powerTariff2Meter_out = tmpVal * 1000
+
 		} else if strings.HasPrefix(line, "1-0:1.7.0") {
 			tmpVal, err := strconv.ParseFloat(line[10:16], 64)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-			powerDraw.Set(tmpVal * 1000)
+			powerDraw_del.Set(tmpVal * 1000)
+
+		} else if strings.HasPrefix(line, "1-0:2.7.0") {
+			tmpVal, err := strconv.ParseFloat(line[10:16], 64)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			powerDraw_res.Set(tmpVal * 1000)
+
 		}
 		if os.Getenv("SERIAL_DEVICE") == "" {
 			time.Sleep(200 * time.Millisecond)
