@@ -34,7 +34,6 @@ var (
 			Help: "power meter tariff1 to client reading in Watthours",
 		},
 		func() float64 {
-			fmt.Println("reading powerTariff1Meter_in")
 			return powerTariff1Meter_in
 		},
 	)
@@ -45,7 +44,6 @@ var (
 			Help: "power meter tariff1 by client reading in Watthours",
 		},
 		func() float64 {
-			fmt.Println("reading powerTariff1Meter_out")
 			return powerTariff1Meter_out
 		},
 	)
