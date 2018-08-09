@@ -22,15 +22,15 @@ var (
 	powerDraw = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "power_draw_watts",
-			Help: "Current power draw in Watts",
+			Help: "Current power draw in Watts (W)",
 		},
 		[]string{"direction"},
 	)
 
 	powerTariff = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
-			Help: "power meter reading in Watthours",
 			Name: "power_meter_watthours",
+			Help: "power meter reading in Watthours (Wh)",
 		},
 		[]string{"metering", "direction"},
 	)
