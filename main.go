@@ -44,6 +44,14 @@ func init() {
 }
 
 func main() {
+
+	var (
+		listenAddress = flag.String("web.listen-address", ":9357", "Address to listen on for web interface and telemetry.")
+		metricsPath   = flag.String("web.telemetry-path", "/metrics", "Path under which to expose metrics.")
+	)
+
+	flag.Parse()
+
 	// if SERIAL_DEVICE variable is set use it, otherwise read test files
 	if os.Getenv("SERIAL_DEVICE") != "" {
 		log.Println("gonna use serial device")
@@ -77,9 +85,10 @@ func main() {
 	// sleeping 10 seconds to prevent uninitialized scrapes
 	time.Sleep(10 * time.Second)
 
-	fmt.Println("now serving metrics")
-	http.Handle("/metrics", promhttp.Handler())
-	log.Fatal(http.ListenAndServe(":9222", nil))
+	// Start Prometheus listener
+	log.Println("now serving metrics")
+	http.Handle(*metricsPath, promhttp.Handler())
+	log.Fatal(http.ListenAndServe(*listenAddress, nil))
 
 }
 
