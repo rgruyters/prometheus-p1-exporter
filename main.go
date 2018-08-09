@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -86,21 +85,21 @@ func init() {
 
 func main() {
 	if os.Getenv("SERIAL_DEVICE") != "" {
-		fmt.Println("gonna use serial device")
+		log.Println("gonna use serial device")
 		config := &serial.Config{Name: os.Getenv("SERIAL_DEVICE"), Baud: 115200}
 
 		usb, err := serial.OpenPort(config)
 		if err != nil {
-			fmt.Printf("Could not open serial interface: %s", err)
+			log.Fatalf("Could not open serial interface: %s", err)
 			return
 		}
 
 		reader = bufio.NewReader(usb)
 	} else {
-		fmt.Println("gonna use some files")
+		log.Println("gonna use some files")
 		file, err := os.Open("examples/fulllist.txt")
 		if err != nil {
-			fmt.Println(err)
+			log.Fatalln(err)
 			return
 		}
 		defer file.Close()
@@ -123,14 +122,14 @@ func listener(source io.Reader) {
 	for {
 		rawLine, err := reader.ReadBytes('\x0a')
 		if err != nil {
-			fmt.Println(err)
+			log.Fatalln(err)
 			return
 		}
 		line = string(rawLine[:])
 		if strings.HasPrefix(line, "1-0:1.8.1") {
 			tmpVal, err := strconv.ParseFloat(line[10:20], 64)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			powerTariff1Meter_in = tmpVal * 1000
@@ -138,7 +137,7 @@ func listener(source io.Reader) {
 		} else if strings.HasPrefix(line, "1-0:2.8.1") {
 			tmpVal, err := strconv.ParseFloat(line[10:20], 64)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			powerTariff1Meter_out = tmpVal * 1000
@@ -146,7 +145,7 @@ func listener(source io.Reader) {
 		} else if strings.HasPrefix(line, "1-0:1.8.2") {
 			tmpVal, err := strconv.ParseFloat(line[10:20], 64)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			powerTariff2Meter_in = tmpVal * 1000
@@ -154,7 +153,7 @@ func listener(source io.Reader) {
 		} else if strings.HasPrefix(line, "1-0:2.8.2") {
 			tmpVal, err := strconv.ParseFloat(line[10:20], 64)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			powerTariff2Meter_out = tmpVal * 1000
@@ -162,7 +161,7 @@ func listener(source io.Reader) {
 		} else if strings.HasPrefix(line, "1-0:1.7.0") {
 			tmpVal, err := strconv.ParseFloat(line[10:16], 64)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			powerDraw_del.Set(tmpVal * 1000)
@@ -170,7 +169,7 @@ func listener(source io.Reader) {
 		} else if strings.HasPrefix(line, "1-0:2.7.0") {
 			tmpVal, err := strconv.ParseFloat(line[10:16], 64)
 			if err != nil {
-				fmt.Println(err)
+				log.Println(err)
 				continue
 			}
 			powerDraw_res.Set(tmpVal * 1000)
